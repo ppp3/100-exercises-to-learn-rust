@@ -21,7 +21,7 @@ impl Add for WrappingU32 {
 
     fn add(self, other: Self) -> Self {
         Self::new(self.value.wrapping_add(other.value))
-        
+
     }
 }
 #[cfg(test)]
