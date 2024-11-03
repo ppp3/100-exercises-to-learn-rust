@@ -1,4 +1,5 @@
-use crate::status::Status;
+use std::fmt::Display;
+use crate::status::{ParseStatusError, Status};
 
 // We've seen how to declare modules in one of the earliest exercises, but
 // we haven't seen how to extract them into separate files.
@@ -23,6 +24,18 @@ pub enum TicketNewError {
     DescriptionCannotBeEmpty,
     #[error("Description cannot be longer than 500 bytes")]
     DescriptionTooLong,
+    #[error("`invalid` is not a valid status. Use one of: ToDo, InProgress, Done")]
+    ParseStatusError{
+        #[source]
+        inner: ParseStatusError
+    }
+}
+
+impl From<ParseStatusError> for TicketNewError {
+    fn from(e: ParseStatusError) -> Self {
+
+        TicketNewError::ParseStatusError{inner:e}
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -32,7 +45,10 @@ pub struct Ticket {
     status: Status,
 }
 
+
+
 impl Ticket {
+
     pub fn new(title: String, description: String, status: String) -> Result<Self, TicketNewError> {
         if title.is_empty() {
             return Err(TicketNewError::TitleCannotBeEmpty);
@@ -47,12 +63,15 @@ impl Ticket {
             return Err(TicketNewError::DescriptionTooLong);
         }
 
+
         // TODO: Parse the status string into a `Status` enum.
+
+        let status=Status::try_from(status)?;
 
         Ok(Ticket {
             title,
             description,
-            status,
+            status
         })
     }
 }
@@ -65,12 +84,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn invalid_status() {
-        let err = Ticket::new(valid_title(), valid_description(), "invalid".into()).unwrap_err();
-        assert_eq!(
-            err.to_string(),
-            "`invalid` is not a valid status. Use one of: ToDo, InProgress, Done"
-        );
-        assert!(err.source().is_some());
-    }
+fn invalid_status() {
+    let err = Ticket::new(valid_title(), valid_description(), "invalid".into()).unwrap_err();
+    assert_eq!(
+        err.to_string(),
+        "`invalid` is not a valid status. Use one of: ToDo, InProgress, Done"
+    );
+    assert!(err.source().is_some());
+}
 }
